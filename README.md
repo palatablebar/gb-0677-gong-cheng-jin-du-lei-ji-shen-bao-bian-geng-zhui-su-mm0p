@@ -31,12 +31,13 @@ docker compose exec -T app pytest -q
 2. 切换模块查看源行及裁决依据。
 3. 重跑相同样例，批次号与行数保持一致。
 4. 复核后导出一份证据CSV。版本已变化的复核提交返回409。
+5. 签证归档页封存签证：业务校验值与运行记录分开显示；同源重试复用已封存记录，归档失败保留旧版。
 
 ## 输入与输出
 
 输入列见 `docs/DATA-DICTIONARY.md`。项目包含dirty.csv、clean.csv、legacy.csv，统一走实际导入路径。上传限制4MB，拒绝不带时区的时间。业务键按字符串保留，Decimal参与计算，空值不会当零。
 
-`POST /api/runs` 接收sample或csv；`GET /api/runs`返回历史批次；`POST /api/runs/<id>/review`需要version与decision；`GET /api/runs/<id>/archive`返回唯一证据导出。
+`POST /api/runs` 接收sample或csv；`GET /api/runs`返回历史批次；`POST /api/runs/<id>/review`需要version与decision；`GET /api/runs/<id>/archive`返回唯一证据导出；`POST /api/runs/<id>/seal`封存签证并返回业务校验值与运行记录，`GET /api/runs/<id>/seal`查看已封存结果。
 
 ## 范围
 

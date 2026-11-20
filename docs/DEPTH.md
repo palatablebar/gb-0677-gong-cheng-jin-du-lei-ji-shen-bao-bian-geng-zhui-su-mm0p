@@ -26,6 +26,8 @@
 | TRAP-14 | 重复键冲突 | 后写覆盖 | 保留首条并隔离冲突行 | `app/modules/m1_claims/rules.py` | `tests/test_m1.py::test_duplicate_conflict_real_sample` |
 | TRAP-18 | 空态三态 | 一律成功 | 分别错误码 | `app/modules/m1_claims/rules.py` | `tests/test_m1.py::test_three_empty_states` |
 | TRAP-26 | 旧版本提交 | 覆盖新结果 | 版本条件更新 | `app/store.py` | `tests/test_e2e.py::test_stale_review_409` |
+| TRAP-27 | 运行字段混入封存值 | 同源重跑得到新值 | 业务事实与运行记录分离 | `app/seal.py` | `tests/test_seal.py::test_checksum_stable_across_reruns` |
+| TRAP-28 | 归档中途失败 | 旧证据被截断 | 先构建后单事务写入 | `app/store.py` | `tests/test_seal.py::test_failed_seal_keeps_previous` |
 | TRAP-06 | 全角累计量 | 转换失败 | Decimal归一 | `app/values.py` | `tests/test_m2.py::test_fullwidth_quantity` |
 | TRAP-07 | 累计量空值 | 按零冲回 | 隔离缺失 | `app/values.py` | `tests/test_m2.py::test_real_null_not_zero` |
 | TRAP-10 | 分币舍入 | 浮点误差 | 分项量化后净额守恒 | `app/modules/m5_deductions/rules.py` | `tests/test_m5.py::test_fraction_rounds_to_cent` |
@@ -34,6 +36,10 @@
 ## 对账规则
 
 输入原始逻辑行=最终采纳来源行+隔离来源行+重复行+空白行+分段表头。派生记录用_sources保存完整来源，因此分组不丢行。业务预期合计与上游申报合计之差等于逐行差异之和。结果按输入摘要、规则版本及参数产生唯一批次，事务写入；同源重跑只复用已有批次。
+
+## 签证封存裁决
+
+封存身份（业务校验值）只含业务事实：批次标识、输入摘要、规则版本与参数、最终行（含来源谱系）、累计隔离记录、采信与对账指标。生成时刻、耗时、封存时刻属于运行记录，分开显示且不进入校验值，同源重跑因此得到同一业务校验值。封存结果持久化在seals表，以业务校验值为键；同一来源重试复用已封存记录，不重复封存。封存先完整构建再单事务写入，归档失败保留旧版。证据导出CSV附seal行（校验值与规范化事实原文，可直接重算核对）与run_record行（运行记录）。
 
 ## 已知不覆盖
 

@@ -1,4 +1,5 @@
 import csv,io,json
+from app.seal import business_checksum,business_facts,canonical,run_record
 def build_archive(run):
     stream=io.StringIO(newline="");writer=csv.writer(stream)
     writer.writerow(["run_id","input_sha256","rule_version","kind","source_lines","reason","evidence"])
@@ -7,4 +8,8 @@ def build_archive(run):
         writer.writerow([run["run_id"],meta["input_sha256"],meta["rule_version"],"accepted",json.dumps(row.get("_sources",[])),row.get("status",""),json.dumps(row,ensure_ascii=False)])
     for row in run["stages"][-1].get("cumulative_quarantine",[]):
         writer.writerow([run["run_id"],meta["input_sha256"],meta["rule_version"],"quarantine",json.dumps(row.get("_sources",[])),row.get("reason",""),json.dumps(row,ensure_ascii=False)])
+    writer.writerow([run["run_id"],meta["input_sha256"],meta["rule_version"],"seal","","business_sha256",business_checksum(run)])
+    writer.writerow([run["run_id"],meta["input_sha256"],meta["rule_version"],"seal","","facts",canonical(business_facts(run))])
+    for key,value in run_record(run).items():
+        if key!="run_id": writer.writerow([run["run_id"],meta["input_sha256"],meta["rule_version"],"run_record","",key,str(value)])
     return "\ufeff"+stream.getvalue()

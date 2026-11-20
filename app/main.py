@@ -45,6 +45,12 @@ def create_app():
         from app.archive import build_archive
         run=store.get(run_id)
         return application.response_class(build_archive(run),mimetype="text/csv",headers={"Content-Disposition":'attachment; filename="evidence.csv"'})
+    @application.post("/api/runs/<run_id>/seal")
+    def seal(run_id):
+        payload,created=store.save_seal(store.get(run_id))
+        return {**payload,"created":created},201 if created else 200
+    @application.get("/api/runs/<run_id>/seal")
+    def seal_detail(run_id): return store.get_seal(run_id)
     for index,(slug,title) in enumerate(MODULES,1):
         module=importlib.import_module(f"app.modules.m{index}_{slug}.handler")
         application.register_blueprint(module.bp)
